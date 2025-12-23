@@ -19,59 +19,17 @@ jobs:
       matrix:
         susfs: [false, true]
         build:
-#          - type: Normal
-#            ksu: false
-#            exclude: susfs
-#            ak3_suffix: ""
-#          - type: KSU
-#            ksu: true
-#            repo: "tiann/KernelSU"
-#            folder: "KernelSU"
-#            branch: "main"
-#            kernel_patches: "../james_patches/next/next_hooks.patch"
-#            extra_configs: "CONFIG_KPROBES=n"
-#            susfs_ksu_patches: "../susfs/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
-#            ak3_suffix: "_KSU"
           - type: KSUN
             ksu: true
             repo: "KernelSU-Next/KernelSU-Next"
             folder: "KernelSU-Next"
-            branch: "next"
-            exclude: susfs
-            susfs_repo: "pershoot/KernelSU-Next"
-            susfs_branch: "next-susfs"
+            branch: "legacy"
             ksu_patches: "KSUN/WildJames-Manager.patch"
-            kernel_patches: "../james_patches/sultan/syscall_hooks.patch"
+            susfsless_kernel_patches: "sultan/scope-min-hooks-v1.6.patch"
             extra_configs: "CONFIG_KSU_KPROBES_HOOK=n"
+            susfsless_configs: "CONFIG_KSU_SUSFS=n"
+            susfs_ksu_patches: "KSUN/KSUN-SUSFS-2.0.0.patch"
             ak3_suffix: "_KSUNext"
-          - type: RKSU
-            ksu: true
-            repo: "rsuntk/KernelSU"
-            folder: "KernelSU"
-            branch: "main"
-            susfs_branch: "susfs-rksu-master"
-            susfsless_kernel_patches: "../james_patches/sultan/syscall_hooks.patch sultan/reboot-hook.patch"
-            extra_configs: "CONFIG_KSU_MANUAL_HOOK=y"
-            ak3_suffix: "_RKSU"
-          - type: SukiSU
-            ksu: true
-            repo: "SukiSU-Ultra/SukiSU-Ultra"
-            folder: "KernelSU"
-            branch: "builtin"
-            susfsless_kernel_patches: "../james_patches/sultan/syscall_hooks.patch sultan/reboot-hook.patch"
-            extra_configs: "CONFIG_KSU_MANUAL_SU=n CONFIG_COMPAT=y CONFIG_ZRAM_GS_WRITEBACK=y"
-            susfs_configs: "CONFIG_KSU_SUSFS=y CONFIG_KSU_NONE_HOOK=y"
-            susfsless_configs: "CONFIG_KSU_MANUAL_HOOK=y"
-            ak3_suffix: "_SukiSU"
-            # kpm: "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux"
-          - type: xxKSU
-            ksu: true
-            exclude: susfs
-            repo: "backslashxx/KernelSU"
-            folder: "KernelSU"
-            branch: "master"
-            kernel_patches: "sultan/scope-min-hooks-v1.6.patch"
-            ak3_suffix: "_xxKSU"
         kernel:
           - codename: gs201
             repo: "android_kernel_google_gs201"
@@ -311,107 +269,3 @@ jobs:
         with:
           name: ${{ env.zip_name }}
           path: ${{ env.ak3_dir }}/*
-
-  release:
-    needs: build
-    if: github.event_name != 'pull_request'
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: ./downloaded-artifacts
-
-      - name: Set Release Variables
-        id: release_vars
-        run: |
-          echo "date=$(date +"%d/%m/%Y")" >> $GITHUB_ENV
-
-          git clone --depth=1 "https://github.com/TheSillyOk/sh" "sh"
-
-          echo "sh_dir=$PWD/sh" >> $GITHUB_ENV
-          echo "artifacts_dir=$PWD/downloaded-artifacts" >> $GITHUB_ENV
-
-          KSU_URL=$(git ls-remote https://github.com/tiann/KernelSU HEAD | awk '{print "https://github.com/tiann/KernelSU/commit/"$1}')
-          KSUN_URL=$(git ls-remote https://github.com/KernelSU-Next/KernelSU-Next.git next | awk '{print "https://github.com/KernelSU-Next/KernelSU-Next/commit/"$1}')
-          RKSU_URL=$(git ls-remote https://github.com/rsuntk/KernelSU HEAD | awk '{print "https://github.com/rsuntk/KernelSU/commit/"$1}')
-          SUKI_URL=$(git ls-remote https://github.com/SukiSU-Ultra/SukiSU-Ultra HEAD | awk '{print "https://github.com/SukiSU-Ultra/SukiSU-Ultra/commit/"$1}')
-          xxKSU_URL=$(git ls-remote https://github.com/backslashxx/KernelSU HEAD | awk '{print "https://github.com/backslashxx/KernelSU/commit/"$1}')
-          echo "KSU_URL=$KSU_URL" >> $GITHUB_ENV
-          echo "KSUN_URL=$KSUN_URL" >> $GITHUB_ENV
-          echo "RKSU_URL=$RKSU_URL" >> $GITHUB_ENV
-          echo "SUKI_URL=$SUKI_URL" >> $GITHUB_ENV
-          echo "xxKSU_URL=$xxKSU_URL" >> $GITHUB_ENV
-
-          echo "KSU_V=$(./sh/get_ksuver.sh "tiann" "KernelSU" "main")" >> $GITHUB_ENV
-          echo "KSUN_V=$(./sh/get_ksuver.sh "KernelSU-Next" "KernelSU-Next" "next")" >> $GITHUB_ENV
-          echo "RKSU_V=$(./sh/get_ksuver.sh "rsuntk" "KernelSU" "main")" >> $GITHUB_ENV
-          echo "SUKI_V=$(./sh/get_ksuver.sh "SukiSU-Ultra" "SukiSU-Ultra" "main")" >> $GITHUB_ENV
-          echo "xxKSU_V=$(./sh/get_ksuver.sh "backslashxx" "KernelSU" "master")" >> $GITHUB_ENV
-
-      - name: Generate Release Body
-        id: release_body
-        run: |
-          cat << EOF > release_body.md
-          ⚠️ **COMPATIBILITY NOTICE** ⚠️
-          Please ensure compatibility by comparing release dates with official Sultan kernel releases
-          
-          Module:
-          -> https://github.com/sidex15/ksu_module_susfs
-          
-          Managers:
-          -> https://github.com/WildKernels/Wild_KSU
-          -> https://github.com/KernelSU-Next/KernelSU-Next
-          -> https://github.com/rsuntk/KernelSU
-          -> https://github.com/SukiSU-Ultra/SukiSU-Ultra
-          -> https://github.com/backslashxx/KernelSU/releases / https://t.me/kowsu_build
-          
-          Features:
-          [+] KSUN [${{ env.KSUN_V }}](${{ env.KSUN_URL }}) + WKSU Manager
-          [+] RKSU [${{ env.RKSU_V }}](${{ env.RKSU_URL }})
-          [+] SukiSU [${{ env.SUKI_V }}](${{ env.SUKI_URL }})
-          [+] xxKSU [${{ env.xxKSU_V }}](${{ env.xxKSU_URL }})
-          [+] SUSFS v1.5.12
-          EOF
-
-      - name: Set release tag
-        env:
-         GH_TOKEN: ${{ github.token }}
-        run: |
-            gh auth setup-git
-            git clone --depth=1 "https://github.com/${{ github.repository }}" --depth=1 --branch="${{ github.ref_name }}" repo
-            cd repo
-            echo "repo_dir=$PWD" >> $GITHUB_ENV
-
-            TAG=$(date +"%Y/%m/%d")
-            LATEST_TAG=$(gh api repos/${{ github.repository }}/tags --jq '.[0].name')
-
-            if [[ "$LATEST_TAG" == "$TAG"* ]]; then
-              echo "$TAG* == $LATEST_TAG"
-              TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')
-            else
-              echo "First release of the day"
-              TAG="$TAG-r1"
-            fi
-
-            gh release delete "$TAG" -y || true
-            echo "Created tag: $TAG"
-            echo "TAG=$TAG" >> $GITHUB_ENV
-            git tag $TAG || true
-            git push origin $TAG || true
-
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.TAG }}
-          name: ${{ env.date }}
-          body_path: release_body.md
-
-      - name: Upload Release Assets
-        env:
-         GH_TOKEN: ${{ github.token }}
-        run: |
-          bash ${{ env.sh_dir }}/upload-assets.sh "${{ env.TAG }}" "${{ env.repo_dir }}" "${{ env.artifacts_dir }}"
