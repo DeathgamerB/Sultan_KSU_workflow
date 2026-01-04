@@ -53,16 +53,16 @@ jobs:
             susfsless_kernel_patches: "sultan/scope-min-hooks-v1.6.patch"
             extra_configs: "CONFIG_KSU_MANUAL_HOOK=y"
             ak3_suffix: "_RKSU"
-          - type: SukiSU
-            ksu: true
-            repo: "SukiSU-Ultra/SukiSU-Ultra"
-            folder: "KernelSU"
-            branch: "builtin"
-            susfsless_kernel_patches: "sultan/scope-min-hooks-v1.6.patch"
-            extra_configs: "CONFIG_KSU_MANUAL_SU=n CONFIG_COMPAT=y CONFIG_ZRAM_GS_WRITEBACK=y"
-            susfs_configs: "CONFIG_KSU_SUSFS=y CONFIG_KSU_NONE_HOOK=y"
-            susfsless_configs: "CONFIG_KSU_MANUAL_HOOK=y"
-            ak3_suffix: "_SukiSU"
+          #- type: SukiSU
+            #ksu: true
+            #repo: "SukiSU-Ultra/SukiSU-Ultra"
+            #folder: "KernelSU"
+            #branch: "builtin"
+            #susfsless_kernel_patches: "sultan/scope-min-hooks-v1.6.patch"
+            #extra_configs: "CONFIG_KSU_MANUAL_SU=n CONFIG_COMPAT=y CONFIG_ZRAM_GS_WRITEBACK=y"
+            #susfs_configs: "CONFIG_KSU_SUSFS=y CONFIG_KSU_NONE_HOOK=y"
+            #susfsless_configs: "CONFIG_KSU_MANUAL_HOOK=y"
+            #ak3_suffix: "_SukiSU"
             # kpm: "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux"
           - type: xxKSU
             ksu: true
@@ -252,7 +252,7 @@ jobs:
         run: |
           cd "${{ env.kernel_dir }}"
 
-          export KBUILD_BUILD_USER="TheSillyOk"
+          export KBUILD_BUILD_USER="SauerkrautSaft"
           export KBUILD_BUILD_HOST="Github"
 
           make CROSS_COMPILE=$GITHUB_WORKSPACE/gcc-14.2.0-nolibc/aarch64-linux/bin/aarch64-linux- CC=$GITHUB_WORKSPACE/gcc-14.2.0-nolibc/aarch64-linux/bin/aarch64-linux-gcc -j$(nproc --all) ${{ matrix.kernel.defconfig }}
